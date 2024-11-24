@@ -61,7 +61,7 @@ public class JasyptUI {
         }
 
         YmlProcessor.processYmlFiles(project, getEncryptor());
-        JOptionPane.showMessageDialog(null, "YML files processed. Decrypted versions saved as -bak.yml.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(null, "YML files processed. Decrypted versions saved as *-bak.yml.", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void handleEncryption(boolean isEncrypt) {

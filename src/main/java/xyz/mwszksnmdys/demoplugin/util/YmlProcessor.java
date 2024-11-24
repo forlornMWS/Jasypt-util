@@ -26,27 +26,38 @@ public class YmlProcessor {
     private static Logger logger = LoggerFactory.getLogger(YmlProcessor.class);
 
     public static void processYmlFiles(Project project, PooledPBEStringEncryptor encryptor) {
-        // 获取项目 resources 目录
-        Path resourcesPath = Paths.get(Objects.requireNonNull(project.getBasePath()), "src/main/resources");
+        // 获取项目的根路径
+        Path projectPath = Paths.get(Objects.requireNonNull(project.getBasePath()));
 
-        if (!Files.exists(resourcesPath)) {
-            System.out.println("Resources directory not found.");
+        if (!Files.exists(projectPath)) {
+            System.out.println("Project directory not found.");
             return;
         }
 
-        // 查找所有 .yml 文件
         try {
-            Files.walk(resourcesPath)
-                    .filter(path -> path.toString().endsWith(".yml"))
-                    .forEach(item -> processSingleYmlFile(item, encryptor));
+            // 遍历项目中的所有子目录
+            Files.walk(projectPath)
+                    .filter(Files::isDirectory) // 筛选出目录
+                    .filter(path -> path.endsWith("src/main/resources")) // 筛选 resources 目录
+                    .forEach(resourcesPath -> {
+                        try {
+                            // 遍历每个 resources 目录中的 .yml 文件
+                            Files.walk(resourcesPath)
+                                    .filter(path -> path.toString().endsWith(".yml"))
+                                    .forEach(ymlFile -> processSingleYmlFile(ymlFile, encryptor));
+                        } catch (IOException e) {
+                            logger.error("处理资源目录中的YML文件时出错：{}", resourcesPath, e);
+                        }
+                    });
         } catch (IOException e) {
-            logger.error("处理Yml文件错误：", e);
+            logger.error("处理模块中的YML文件时出错：", e);
             throw new RuntimeException(e);
         }
     }
 
+
     // todo 支持从 yaml 文件中读取 jasypt 配置并创建 encryptor
-    private static void processSingleYmlFile(Path ymlPath, PooledPBEStringEncryptor encryptor) {
+    public static void processSingleYmlFile(Path ymlPath, PooledPBEStringEncryptor encryptor) {
         try (InputStream inputStream = Files.newInputStream(ymlPath)) {
             // 使用 LoaderOptions 初始化 Yaml
             LoaderOptions loaderOptions = new LoaderOptions();
