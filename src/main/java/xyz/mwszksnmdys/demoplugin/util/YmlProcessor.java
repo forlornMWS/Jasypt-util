@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +27,7 @@ public class YmlProcessor {
 
     public static void processYmlFiles(Project project, PooledPBEStringEncryptor encryptor) {
         // 获取项目 resources 目录
-        Path resourcesPath = Paths.get(project.getBasePath(), "src/main/resources");
+        Path resourcesPath = Paths.get(Objects.requireNonNull(project.getBasePath()), "src/main/resources");
 
         if (!Files.exists(resourcesPath)) {
             System.out.println("Resources directory not found.");
