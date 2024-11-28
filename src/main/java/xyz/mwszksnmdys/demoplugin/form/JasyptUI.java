@@ -56,20 +56,20 @@ public class JasyptUI {
 
     public void handleDecryptFromYamlFile() {
         if (project == null) {
-            JOptionPane.showMessageDialog(null, "No project found!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "获取项目失败!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        YmlProcessor.processYmlFiles(project, getEncryptor());
-        JOptionPane.showMessageDialog(null, "YML files processed. Decrypted versions saved as *-bak.yml.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        YmlProcessor.processYmlFiles(project);
+        JOptionPane.showMessageDialog(null, "yml文件已解密，保存为 *-bak.yml.", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void handleEncryption(boolean isEncrypt) {
         String text = this.getTextField().getText().trim();
         PooledPBEStringEncryptor encryptor = getEncryptor();
 
-        if(text.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "No text found!", "Error", JOptionPane.ERROR_MESSAGE);
+        if (text.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "文本不能为空!", "Error", JOptionPane.ERROR_MESSAGE);
         }
 
         if (encryptor == null) return;
@@ -92,11 +92,11 @@ public class JasyptUI {
         String key = this.getKeyField().getText().trim();
         String algorithm = (String) this.getAlgorithmBox().getSelectedItem();
         if (key.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Key cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "密钥不能为空!", "Error", JOptionPane.ERROR_MESSAGE);
             return null;
         }
         if (algorithm == null || algorithm.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Algorithm cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "算法不能为空!", "Error", JOptionPane.ERROR_MESSAGE);
             return null;
         }
 
@@ -126,6 +126,6 @@ public class JasyptUI {
     private void copyToClipboard(String text) {
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         clipboard.setContents(new StringSelection(text), null);
-        JOptionPane.showMessageDialog(this.getResultField(), "Result copied to clipboard!", "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this.getResultField(), "结果已拷贝到剪切板！", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 }

@@ -22,8 +22,6 @@
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-            <toolWindow id="Jasypt Tool" factoryClass="xyz.mwszksnmdys.demoplugin.action.JasyptToolWindowFactory" anchor="right" />
-
     </extensions>
     <actions>
         <action id="jasyptButonClick" class="xyz.mwszksnmdys.demoplugin.action.JasyptAction" text="Jasypt"
