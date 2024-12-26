@@ -61,7 +61,7 @@ public class JasyptUI {
         }
 
         YmlProcessor.processYmlFiles(project);
-        JOptionPane.showMessageDialog(null, "yml文件已解密，保存为 *-bak.yml.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void handleEncryption(boolean isEncrypt) {

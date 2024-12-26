@@ -1,6 +1,10 @@
 package xyz.mwszksnmdys.demoplugin.util;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
 import org.slf4j.Logger;
@@ -15,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,90 +30,89 @@ public class YmlProcessor {
     private static final Logger logger = LoggerFactory.getLogger(YmlProcessor.class);
 
     public static void processYmlFiles(Project project) {
-        // 获取项目的根路径
-        Path projectPath = Paths.get(Objects.requireNonNull(project.getBasePath()));
+        // Get all modules in the project
+        Module[] modules = ModuleManager.getInstance(project).getModules();
 
-        if (!Files.exists(projectPath)) {
-            logger.error("获取项目路径失败");
-            JOptionPane.showMessageDialog(null, "未找到项目路径", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        for (Module module : modules) {
+            try {
+                // Get module content roots
+                VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
 
-        try {
-            // 遍历项目中的所有子目录
-            Files.walk(projectPath)
-                    .filter(Files::isDirectory) // 筛选出目录
-                    .filter(path -> path.endsWith("src/main/resources")) // 筛选 resources 目录
-                    .forEach(resourcesPath -> {
-                        try {
-                            // 遍历每个 resources 目录中的 .yml 文件
-                            Files.walk(resourcesPath)
-                                    .filter(path -> path.toString().endsWith(".yml"))
-                                    .forEach(ymlFile -> processSingleYmlFile(ymlFile));
-                        } catch (IOException e) {
-                            logger.error("处理资源目录中的YML文件时出错：{}", resourcesPath, e);
-                        }
-                    });
-        } catch (IOException e) {
-            logger.error("处理模块中的YML文件时出错：", e);
-            JOptionPane.showMessageDialog(null, "处理模块中的YML文件出错", "Error", JOptionPane.ERROR_MESSAGE);
+                for (VirtualFile contentRoot : contentRoots) {
+                    Path modulePath = Paths.get(contentRoot.getPath());
+
+                    // Process resources directories in each module
+                    Files.walk(modulePath)
+                            .filter(Files::isDirectory)
+                            .filter(path -> path.endsWith("src/main/resources"))
+                            .forEach(resourcesPath -> {
+                                try {
+                                    Files.walk(resourcesPath)
+                                            .filter(path -> path.toString().endsWith(".yml"))
+                                            .forEach(YmlProcessor::processSingleYmlFile);
+                                } catch (IOException e) {
+                                    logger.error("Error processing YML files in resources directory: {}", resourcesPath, e);
+                                }
+                            });
+                }
+            } catch (IOException e) {
+                logger.error("Error processing module: {}", module.getName(), e);
+                JOptionPane.showMessageDialog(null,
+                        "Error processing module: " + module.getName(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
-
-    //  从 yaml 文件中读取 jasypt 配置并创建 encryptor 解密
     public static void processSingleYmlFile(Path ymlPath) {
         try (InputStream inputStream = Files.newInputStream(ymlPath)) {
-            // 使用 LoaderOptions 初始化 Yaml
             LoaderOptions loaderOptions = new LoaderOptions();
             Yaml yaml = new Yaml(loaderOptions);
-
-            // 加载 YAML 文件内容到 Map
             Map<String, Object> yamlContent = yaml.load(inputStream);
 
             if (yamlContent == null || !yamlContent.containsKey("jasypt")) {
-                logger.error("未找到 Jasypt 配置: {}", ymlPath);
+                logger.error("No Jasypt configuration found: {}", ymlPath);
                 return;
             }
 
             PooledPBEStringEncryptor encryptor = getEncryptor((Map<String, Object>) yamlContent.get("jasypt"));
+            String content = Files.readString(ymlPath);
+            Matcher matcher = ENC_PATTERN.matcher(content);
 
-            // 遍历文件内容，查找并解密 ENC()
-            boolean hasEncryptedContent = false;
-            String originalContent = Files.readString(ymlPath);
-            StringBuilder decryptedContent = new StringBuilder();
-
-            for (String line : originalContent.split("\n")) {
-                Matcher matcher = ENC_PATTERN.matcher(line);
-                String decryptedLine = line;
-
-                while (matcher.find()) {
-                    hasEncryptedContent = true;
-                    String encryptedValue = matcher.group(1);
-                    String decryptedValue = encryptor.decrypt(encryptedValue);
-                    decryptedLine = decryptedLine.replace(matcher.group(0), decryptedValue);
-                }
-
-                decryptedContent.append(decryptedLine).append("\n");
-            }
-
-            // 如果没有加密内容，跳过生成备份文件
-            if (!hasEncryptedContent) {
-                logger.error("没有加密的内容 ENC() {}", ymlPath);
+            if (!matcher.find()) {
+                logger.error("No ENC() content found in {}", ymlPath);
                 return;
             }
 
-            // 保存解密后的文件为 -bak.yml
-            Path bakPath = Paths.get(ymlPath.toString().replace(".yml", "-bak.yml"));
-            Files.writeString(bakPath, decryptedContent.toString());
-            logger.info("解密的yml文件已创建: {}", bakPath);
+            matcher.reset();
+            StringBuffer processedContent = new StringBuffer();
+
+            while (matcher.find()) {
+                String encValue = matcher.group(1);
+                String replacement;
+
+                try {
+                    // Try to decrypt
+                    replacement = encryptor.decrypt(encValue);
+                } catch (Exception e) {
+                    // If decryption fails, encrypt the content
+                    replacement = "ENC(" + encryptor.encrypt(encValue) + ")";
+                }
+
+                matcher.appendReplacement(processedContent, Matcher.quoteReplacement(replacement));
+            }
+            matcher.appendTail(processedContent);
+
+            Files.writeString(ymlPath, processedContent.toString());
+            logger.info("File processed successfully: {}", ymlPath);
 
         } catch (Exception e) {
-            logger.error("Yaml文件解密失败 ", e);
-            JOptionPane.showMessageDialog(null, "Yaml文件解密失败", "Error", JOptionPane.ERROR_MESSAGE);
-
+            logger.error("Failed to process YAML file", e);
+            JOptionPane.showMessageDialog(null, "Failed to process YAML file", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
     private static PooledPBEStringEncryptor getEncryptor(Map<String, Object> jasyptConfig) {
         Object encryptorConfig = jasyptConfig.get("encryptor");

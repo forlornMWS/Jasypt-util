@@ -2,14 +2,24 @@ plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.25"
     id("org.jetbrains.intellij") version "1.17.4"
+    id("org.jetbrains.changelog") version "2.2.0"
 }
 
 group = "xyz.mwszksnmdys"
-version = "1.0.2"
+version = "1.0.3"
 
 repositories {
     mavenCentral()
 }
+
+changelog {
+    version.set(project.version.toString())
+    path.set(file("CHANGELOG.md").canonicalPath)
+    itemPrefix.set("-")
+    keepUnreleasedSection.set(true)
+    groups.set(listOf("Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"))
+}
+
 
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html

@@ -95,7 +95,7 @@
               <component id="5940" class="javax.swing.JButton" binding="decryptYAMLButton" default-binding="true">
                 <constraints border-constraint="West"/>
                 <properties>
-                  <text value="Decrypt YAML"/>
+                  <text value="PROCESS YML"/>
                 </properties>
               </component>
               <grid id="d7f02" binding="buttonJpanel" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="2">
