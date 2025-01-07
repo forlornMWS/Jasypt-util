@@ -92,12 +92,6 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="5940" class="javax.swing.JButton" binding="decryptYAMLButton" default-binding="true">
-                <constraints border-constraint="West"/>
-                <properties>
-                  <text value="PROCESS YML"/>
-                </properties>
-              </component>
               <grid id="d7f02" binding="buttonJpanel" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="2">
                 <constraints border-constraint="East"/>
                 <properties/>
@@ -117,6 +111,12 @@
                   </component>
                 </children>
               </grid>
+              <component id="newButton" class="javax.swing.JButton" binding="processYmlButton">
+                <constraints border-constraint="West"/>
+                <properties>
+                  <text value="process yml"/>
+                </properties>
+              </component>
             </children>
           </grid>
         </children>

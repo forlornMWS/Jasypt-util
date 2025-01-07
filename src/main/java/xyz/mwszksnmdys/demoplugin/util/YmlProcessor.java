@@ -30,18 +30,15 @@ public class YmlProcessor {
     private static final Logger logger = LoggerFactory.getLogger(YmlProcessor.class);
 
     public static void processYmlFiles(Project project) {
-        // Get all modules in the project
         Module[] modules = ModuleManager.getInstance(project).getModules();
 
         for (Module module : modules) {
             try {
-                // Get module content roots
                 VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
 
                 for (VirtualFile contentRoot : contentRoots) {
                     Path modulePath = Paths.get(contentRoot.getPath());
 
-                    // Process resources directories in each module
                     Files.walk(modulePath)
                             .filter(Files::isDirectory)
                             .filter(path -> path.endsWith("src/main/resources"))
@@ -62,6 +59,33 @@ public class YmlProcessor {
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
             }
+        }
+    }
+
+    public static void processYmlFileOrDirectory(Path path) {
+        try {
+            if (Files.isDirectory(path)) {
+                Files.walk(path)
+                        .filter(p -> p.toString().endsWith(".yml"))
+                        .forEach(YmlProcessor::processSingleYmlFile);
+                JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else if (path.toString().endsWith(".yml")) {
+                processSingleYmlFile(path);
+                JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+            } else {
+                logger.error("Selected file is not a YML file: {}", path);
+                JOptionPane.showMessageDialog(null,
+                        "Selected file is not a YML file: " + path,
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (IOException e) {
+            logger.error("Error processing path: {}", path, e);
+            JOptionPane.showMessageDialog(null,
+                    "Error processing path: " + path,
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -113,7 +137,6 @@ public class YmlProcessor {
         }
     }
 
-
     private static PooledPBEStringEncryptor getEncryptor(Map<String, Object> jasyptConfig) {
         Object encryptorConfig = jasyptConfig.get("encryptor");
         if (encryptorConfig == null) {
@@ -132,9 +155,7 @@ public class YmlProcessor {
             JOptionPane.showMessageDialog(null, "yml文件读取密钥为空", "Error", JOptionPane.ERROR_MESSAGE);
             throw new RuntimeException("yml文件读取密钥为空");
         } else {
-            // 检查是否是环境变量占位符
             if (VARIABLE_PATTERN.matcher(password).matches()) {
-                // 解析默认值和环境变量名
                 String envKey = password.substring(2, password.indexOf('}'));
                 String defaultValue = null;
 
@@ -143,15 +164,12 @@ public class YmlProcessor {
                     envKey = envKey.substring(0, envKey.indexOf(':'));
                 }
 
-                // 优先从环境变量读取
                 password = System.getenv(envKey);
 
-                // 如果环境变量未设置,使用默认值
                 if (password == null && defaultValue != null) {
                     password = defaultValue;
                 }
 
-                // 如果环境变量和默认值都为空,抛出异常
                 if (password == null) {
                     JOptionPane.showMessageDialog(null, "环境变量 " + envKey + " 未设置且无默认值", "Error", JOptionPane.ERROR_MESSAGE);
                     throw new RuntimeException("环境变量 " + envKey + " 未设置且无默认值");
@@ -165,16 +183,13 @@ public class YmlProcessor {
         config.setPoolSize("1");
 
         try {
-            // 加载 SaltGenerator
             Class<?> saltGenClass = Class.forName(saltGenClsName, true, YmlProcessor.class.getClassLoader());
             config.setSaltGenerator((org.jasypt.salt.SaltGenerator) saltGenClass.getDeclaredConstructor().newInstance());
 
-            // 加载 IV Generator
             if (ivGenClsName != null) {
                 Class<?> ivGenClass = Class.forName(ivGenClsName, true, YmlProcessor.class.getClassLoader());
                 config.setIvGenerator((org.jasypt.iv.IvGenerator) ivGenClass.getDeclaredConstructor().newInstance());
             } else {
-                // 默认处理 AES 算法的 IV 生成器
                 if (algorithm.contains("AES")) {
                     config.setIvGenerator(new org.jasypt.iv.RandomIvGenerator());
                 } else {
@@ -189,6 +204,4 @@ public class YmlProcessor {
         encryptor.setConfig(config);
         return encryptor;
     }
-
-
 }

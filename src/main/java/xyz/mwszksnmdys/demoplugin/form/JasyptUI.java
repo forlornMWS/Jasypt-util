@@ -1,6 +1,10 @@
 package xyz.mwszksnmdys.demoplugin.form;
 
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import lombok.Getter;
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
@@ -17,36 +21,25 @@ import java.awt.datatransfer.StringSelection;
 public class JasyptUI {
 
     private JPanel rootPanel;
-    // 密钥
     private JTextField keyField;
-    // 文本
     private JTextField textField;
-    // 算法
     private JComboBox<String> algorithmBox;
-
-
-    // 加/解密结果
     private JTextArea resultField;
     private JButton encryptButton;
     private JButton decryptButton;
     private JPanel centerJpanel;
     private JPanel buttonJpanel;
-    private JButton decryptYAMLButton;
+    private JButton processYmlButton;
 
     private Project project;
 
     private JasyptUI() {
-        // 初始化算法选项
         algorithmBox.addItem("PBEWithMD5AndDES");
         algorithmBox.addItem("PBEWithHMACSHA512AndAES_256");
 
-        // 加密按钮事件
         encryptButton.addActionListener(e -> handleEncryption(true));
-
-        // 解密按钮事件
         decryptButton.addActionListener(e -> handleEncryption(false));
-
-        decryptYAMLButton.addActionListener(e -> handleDecryptFromYamlFile());
+        processYmlButton.addActionListener(e -> handleSelectFile());
     }
 
     public JasyptUI(Project project) {
@@ -54,14 +47,25 @@ public class JasyptUI {
         this.project = project;
     }
 
-    public void handleDecryptFromYamlFile() {
+    private void handleSelectFile() {
         if (project == null) {
             JOptionPane.showMessageDialog(null, "获取项目失败!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        YmlProcessor.processYmlFiles(project);
-        JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false);
+        descriptor.setTitle("选择文件或目录");
+        descriptor.setDescription("请选择一个YML文件或目录, 如不选择则处理项目resources目录下所有YML文件.");
+        VirtualFile baseDir = ProjectUtil.guessProjectDir(project);
+        descriptor.setRoots(baseDir);
+
+        VirtualFile file = FileChooser.chooseFile(descriptor, project, baseDir);
+        if (file != null) {
+            YmlProcessor.processYmlFileOrDirectory(file.toNioPath());
+        }else{
+            YmlProcessor.processYmlFiles(project);
+            JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     private void handleEncryption(boolean isEncrypt) {
@@ -81,10 +85,7 @@ public class JasyptUI {
             result = encryptor.decrypt(text);
         }
 
-        // 显示结果
         this.getResultField().setText(result);
-
-        // 自动复制到剪切板
         copyToClipboard(result);
     }
 
@@ -107,11 +108,8 @@ public class JasyptUI {
         config.setKeyObtentionIterations("1000");
         config.setPoolSize("1");
 
-        // 加载 SaltGenerator
         config.setSaltGenerator(new RandomSaltGenerator());
 
-        // 加载 IV Generator
-        // 默认处理 AES 算法的 IV 生成器
         if (algorithm.contains("AES")) {
             config.setIvGenerator(new org.jasypt.iv.RandomIvGenerator());
         } else {

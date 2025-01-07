@@ -6,18 +6,19 @@ plugins {
 }
 
 group = "xyz.mwszksnmdys"
-version = "1.0.3"
+version = "1.0.4"
 
 repositories {
     mavenCentral()
 }
 
 changelog {
-    version.set(project.version.toString())
+    version.set("1.0.4")
     path.set(file("CHANGELOG.md").canonicalPath)
     itemPrefix.set("-")
-    keepUnreleasedSection.set(true)
     groups.set(listOf("Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"))
+    itemPrefix.set("-")
+    lineSeparator.set("\n")
 }
 
 
@@ -62,4 +63,17 @@ tasks {
     publishPlugin {
         token.set(System.getenv("PUBLISH_TOKEN"))
     }
+//
+//    patchPluginXml {
+//        sinceBuild.set("232")
+//        untilBuild.set("243.*")
+//        changeNotes.set(provider {
+//            changelog.renderItem(
+//                changelog
+//                    .getLatest()
+//                    .withEmptySections(false),
+//                org.jetbrains.changelog.Changelog.OutputType.HTML
+//            )
+//        })
+//    }
 }
