@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 public class YmlProcessor {
     private static final String ENC_REGEX = "ENC\\((.*?)\\)";
     private static final Pattern ENC_PATTERN = Pattern.compile(ENC_REGEX);
-    private static final String VARIABLE_REGEX = "\\$\\{(.*?)\\}";
+    private static final String VARIABLE_REGEX = "\\$\\{(.*?)}";
     private static final Pattern VARIABLE_PATTERN = Pattern.compile(VARIABLE_REGEX);
     private static final Logger logger = LoggerFactory.getLogger(YmlProcessor.class);
 
@@ -45,7 +45,7 @@ public class YmlProcessor {
                             .forEach(resourcesPath -> {
                                 try {
                                     Files.walk(resourcesPath)
-                                            .filter(path -> path.toString().endsWith(".yml"))
+                                            .filter(YmlProcessor::isYamlFile)
                                             .forEach(YmlProcessor::processSingleYmlFile);
                                 } catch (IOException e) {
                                     logger.error("Error processing YML files in resources directory: {}", resourcesPath, e);
@@ -62,14 +62,18 @@ public class YmlProcessor {
         }
     }
 
+    private static boolean isYamlFile(Path path) {
+        return path.toString().endsWith(".yml") || path.toString().endsWith(".yaml");
+    }
+
     public static void processYmlFileOrDirectory(Path path) {
         try {
             if (Files.isDirectory(path)) {
                 Files.walk(path)
-                        .filter(p -> p.toString().endsWith(".yml"))
+                        .filter(YmlProcessor::isYamlFile)
                         .forEach(YmlProcessor::processSingleYmlFile);
                 JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
-            } else if (path.toString().endsWith(".yml")) {
+            } else if (isYamlFile(path)) {
                 processSingleYmlFile(path);
                 JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
 
@@ -110,7 +114,7 @@ public class YmlProcessor {
             }
 
             matcher.reset();
-            StringBuffer processedContent = new StringBuffer();
+            StringBuilder processedContent = new StringBuilder();
 
             while (matcher.find()) {
                 String encValue = matcher.group(1);
@@ -139,10 +143,11 @@ public class YmlProcessor {
 
     private static PooledPBEStringEncryptor getEncryptor(Map<String, Object> jasyptConfig) {
         Object encryptorConfig = jasyptConfig.get("encryptor");
-        if (encryptorConfig == null) {
-            JOptionPane.showMessageDialog(null, "Jasypt配置错误", "Error", JOptionPane.ERROR_MESSAGE);
-        }
         Map<String, Object> encryptorConfigMap = (Map<String, Object>) encryptorConfig;
+        if (encryptorConfig == null || encryptorConfigMap.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Jasypt配置错误", "Error", JOptionPane.ERROR_MESSAGE);
+            throw new RuntimeException("Jasypt配置错误");
+        }
         PooledPBEStringEncryptor encryptor = new PooledPBEStringEncryptor();
         SimpleStringPBEConfig config = new SimpleStringPBEConfig();
 

@@ -1,14 +1,23 @@
 package xyz.mwszksnmdys.demoplugin.form;
 
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import lombok.Getter;
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
 import org.jasypt.salt.RandomSaltGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xyz.mwszksnmdys.demoplugin.util.YmlProcessor;
 
@@ -16,6 +25,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 @Getter
 public class JasyptUI {
@@ -53,19 +64,124 @@ public class JasyptUI {
             return;
         }
 
-        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false);
-        descriptor.setTitle("选择文件或目录");
-        descriptor.setDescription("请选择一个YML文件或目录, 如不选择则处理项目resources目录下所有YML文件.");
-        VirtualFile baseDir = ProjectUtil.guessProjectDir(project);
-        descriptor.setRoots(baseDir);
+        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true)
+                .withTitle("选择文件或目录")
+                .withDescription("请选择YML文件或目录, 支持多选. 如不选择则处理项目resources目录下所有YML文件.")
+                .withFileFilter(file -> {
+                    String extension = file.getExtension();
+                    return file.isDirectory() ||
+                            "yml".equalsIgnoreCase(extension) ||
+                            "yaml".equalsIgnoreCase(extension);
+                });
 
-        VirtualFile file = FileChooser.chooseFile(descriptor, project, baseDir);
-        if (file != null) {
-            YmlProcessor.processYmlFileOrDirectory(file.toNioPath());
-        }else{
-            YmlProcessor.processYmlFiles(project);
-            JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        VirtualFile defaultDir = findResourcesDirectory(project);
+
+        VirtualFile[] selectedFiles = FileChooser.chooseFiles(descriptor, project, defaultDir);
+        if (selectedFiles.length > 0) {
+            processSelectedFiles(selectedFiles);
         }
+
+        closeDialog();
+    }
+
+    /**
+     * 处理选中的文件
+     * @param selectedFiles 选中的文件数组
+     */
+    private void processSelectedFiles(@NotNull VirtualFile[] selectedFiles) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, "处理YAML文件", true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+                indicator.setIndeterminate(false);
+                int totalFiles = selectedFiles.length;
+
+                for (int i = 0; i < totalFiles; i++) {
+                    VirtualFile file = selectedFiles[i];
+                    indicator.setText("正在处理: " + file.getName());
+                    indicator.setFraction((double) i / totalFiles);
+
+                    try {
+                        YmlProcessor.processYmlFileOrDirectory(file.toNioPath());
+
+                        // 在EDT中刷新文件
+                        ApplicationManager.getApplication().invokeLater(() -> {
+                            reloadFromDisk(file);
+                        });
+                    } catch (Exception e) {
+                        String errorMessage = "处理文件失败: " + file.getName() + "\n" + e.getMessage();
+                        NotificationGroupManager.getInstance()
+                                .getNotificationGroup("YAML Processing")
+                                .createNotification(errorMessage, NotificationType.ERROR)
+                                .notify(project);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * 查找项目的resources目录
+     * @param project 当前项目
+     * @return resources目录的VirtualFile，如果未找到则返回项目根目录
+     */
+    private VirtualFile findResourcesDirectory(@NotNull Project project) {
+        VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
+        if (projectDir == null) {
+            return null;
+        }
+
+        // 尝试查找标准Maven/Gradle项目结构中的resources目录
+        VirtualFile[] resourcesPaths = {
+                findPath(projectDir, "src", "main", "resources"),
+                findPath(projectDir, "src", "test", "resources")
+        };
+
+        return Stream.of(resourcesPaths)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(projectDir);
+    }
+
+    /**
+     * 安全地查找文件路径
+     * @param base 基础目录
+     * @param paths 子路径数组
+     * @return 找到的VirtualFile，如果路径无效则返回null
+     */
+    private VirtualFile findPath(VirtualFile base, String... paths) {
+        VirtualFile current = base;
+        for (String path : paths) {
+            if (current == null) {
+                return null;
+            }
+            current = current.findChild(path);
+        }
+        return current;
+    }
+
+    /**
+     * 关闭对话框
+     */
+    private void closeDialog() {
+        Window window = SwingUtilities.getWindowAncestor(rootPanel);
+        if (window != null) {
+            window.dispose();
+        }
+    }
+
+    private void reloadFromDisk(VirtualFile file) {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+            FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+            if(file.isDirectory()){
+                VirtualFile[] children = file.getChildren();
+                for (VirtualFile child : children) {
+                    fileDocumentManager.reloadFiles(child);
+                }
+            }else{
+                fileDocumentManager.reloadFiles(file);
+            }
+            VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+        });
     }
 
     private void handleEncryption(boolean isEncrypt) {
