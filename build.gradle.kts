@@ -1,3 +1,5 @@
+import org.jetbrains.changelog.Changelog
+
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.25"
@@ -62,8 +64,10 @@ tasks {
         sinceBuild.set("232")
         untilBuild.set("243.*")
         changeNotes.set(provider {
-            changelog.render(
-                org.jetbrains.changelog.Changelog.OutputType.HTML
+            val changelogItem = changelog.getOrNull(project.version.toString()) ?: changelog.getUnreleased()
+            changelog.renderItem(
+                changelogItem.withHeader(false).withEmptySections(false),
+                Changelog.OutputType.HTML
             )
         })
     }
