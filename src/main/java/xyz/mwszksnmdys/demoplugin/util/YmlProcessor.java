@@ -28,6 +28,7 @@ public class YmlProcessor {
     private static final String VARIABLE_REGEX = "\\$\\{(.*?)}";
     private static final Pattern VARIABLE_PATTERN = Pattern.compile(VARIABLE_REGEX);
     private static final Logger logger = LoggerFactory.getLogger(YmlProcessor.class);
+    private static final String DEFAULT_CONFIG_FILENAME = "application.yml";
 
     public static void processYmlFiles(Project project) {
         Module[] modules = ModuleManager.getInstance(project).getModules();
@@ -94,17 +95,16 @@ public class YmlProcessor {
     }
 
     public static void processSingleYmlFile(Path ymlPath) {
-        try (InputStream inputStream = Files.newInputStream(ymlPath)) {
-            LoaderOptions loaderOptions = new LoaderOptions();
-            Yaml yaml = new Yaml(loaderOptions);
-            Map<String, Object> yamlContent = yaml.load(inputStream);
+        try {
+            // Get jasypt configuration, either from the current file or from application.yml
+            Map<String, Object> jasyptConfig = getJasyptConfig(ymlPath);
 
-            if (yamlContent == null || !yamlContent.containsKey("jasypt")) {
-                logger.error("No Jasypt configuration found: {}", ymlPath);
+            if (jasyptConfig == null) {
+                logger.error("No Jasypt configuration found for: {}", ymlPath);
                 return;
             }
 
-            PooledPBEStringEncryptor encryptor = getEncryptor((Map<String, Object>) yamlContent.get("jasypt"));
+            PooledPBEStringEncryptor encryptor = getEncryptor(jasyptConfig);
             String content = Files.readString(ymlPath);
             Matcher matcher = ENC_PATTERN.matcher(content);
 
@@ -136,8 +136,44 @@ public class YmlProcessor {
             logger.info("File processed successfully: {}", ymlPath);
 
         } catch (Exception e) {
-            logger.error("Failed to process YAML file", e);
-            JOptionPane.showMessageDialog(null, "Failed to process YAML file", "Error", JOptionPane.ERROR_MESSAGE);
+            logger.error("Failed to process YAML file: {}", ymlPath, e);
+            JOptionPane.showMessageDialog(null, "Failed to process YAML file: " + ymlPath, "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private static Map<String, Object> getJasyptConfig(Path ymlPath) {
+        try {
+            // First try to get config from the current file
+            Map<String, Object> yamlContent = loadYamlFile(ymlPath);
+
+            if (yamlContent != null && yamlContent.containsKey("jasypt")) {
+                return (Map<String, Object>) yamlContent.get("jasypt");
+            }
+
+            // If not found, try to get from application.yml in the same directory
+            Path parentDir = ymlPath.getParent();
+            Path defaultConfigPath = parentDir.resolve(DEFAULT_CONFIG_FILENAME);
+
+            if (Files.exists(defaultConfigPath)) {
+                Map<String, Object> defaultConfig = loadYamlFile(defaultConfigPath);
+                if (defaultConfig != null && defaultConfig.containsKey("jasypt")) {
+                    logger.info("Using jasypt configuration from {}", DEFAULT_CONFIG_FILENAME);
+                    return (Map<String, Object>) defaultConfig.get("jasypt");
+                }
+            }
+
+            return null;
+        } catch (Exception e) {
+            logger.error("Error loading jasypt configuration for file: {}", ymlPath, e);
+            return null;
+        }
+    }
+
+    private static Map<String, Object> loadYamlFile(Path path) throws IOException {
+        try (InputStream inputStream = Files.newInputStream(path)) {
+            LoaderOptions loaderOptions = new LoaderOptions();
+            Yaml yaml = new Yaml(loaderOptions);
+            return yaml.load(inputStream);
         }
     }
 

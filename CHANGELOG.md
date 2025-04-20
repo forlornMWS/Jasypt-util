@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [1.0.6] - 2025-04-20
+
+### Added
+- Added Popup menu for quick select yaml files to encrypt/decrypt
+
+### Fixed
+
+- Fixed some known bugs  
+
+### Changed
+
+- Updated the plugin to support the latest version of IntelliJ IDEA
+
+
 ## [1.0.5] - 2025-01-08
 
 ### Fixed
@@ -10,7 +24,7 @@
 
 ### Changed
 
-- Changed the file chooser to use the project resouces path as the default path
+- Changed the file chooser to use the project resources path as the default path
 
 
 ## [1.0.4] - 2025-01-07

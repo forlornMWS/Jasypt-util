@@ -30,5 +30,13 @@
                 description="Jasypt 加密解密">
             <add-to-group group-id="ToolsMenu" anchor="first"/>
         </action>
+
+        <action id="YamlFileAction"
+                class="xyz.mwszksnmdys.demoplugin.action.PopupJasyptAction"
+                text="Encrypt/Decrypt Yaml"
+                description="Process yaml file">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
     </actions>
 </idea-plugin>

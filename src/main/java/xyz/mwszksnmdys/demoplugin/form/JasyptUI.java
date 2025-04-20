@@ -66,7 +66,7 @@ public class JasyptUI {
 
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true)
                 .withTitle("选择文件或目录")
-                .withDescription("请选择YML文件或目录, 支持多选. 如不选择则处理项目resources目录下所有YML文件.")
+                .withDescription("请选择YML文件或目录, 支持多选")
                 .withFileFilter(file -> {
                     String extension = file.getExtension();
                     return file.isDirectory() ||
