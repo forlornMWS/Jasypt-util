@@ -19,6 +19,7 @@ import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
 import org.jasypt.salt.RandomSaltGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import xyz.mwszksnmdys.demoplugin.util.PropertiesProcessor;
 import xyz.mwszksnmdys.demoplugin.util.YmlProcessor;
 
 import javax.swing.*;
@@ -66,12 +67,13 @@ public class JasyptUI {
 
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true)
                 .withTitle("选择文件或目录")
-                .withDescription("请选择YML文件或目录, 支持多选")
+                .withDescription("请选择.yml|.yaml|.properties文件和目录, 支持多选")
                 .withFileFilter(file -> {
                     String extension = file.getExtension();
                     return file.isDirectory() ||
                             "yml".equalsIgnoreCase(extension) ||
-                            "yaml".equalsIgnoreCase(extension);
+                            "yaml".equalsIgnoreCase(extension)
+                            || "properties".equalsIgnoreCase(extension);
                 });
 
         VirtualFile defaultDir = findResourcesDirectory(project);
@@ -89,7 +91,7 @@ public class JasyptUI {
      * @param selectedFiles 选中的文件数组
      */
     private void processSelectedFiles(@NotNull VirtualFile[] selectedFiles) {
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "处理YAML文件", true) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, "处理Config文件", true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
                 indicator.setIndeterminate(false);
@@ -101,8 +103,13 @@ public class JasyptUI {
                     indicator.setFraction((double) i / totalFiles);
 
                     try {
-                        YmlProcessor.processYmlFileOrDirectory(file.toNioPath());
-
+                        if (file.isDirectory()) {
+                            // 处理目录
+                            processDirectory(file);
+                        } else {
+                            // 根据文件类型处理单个文件
+                            processFile(file);
+                        }
                         // 在EDT中刷新文件
                         ApplicationManager.getApplication().invokeLater(() -> {
                             reloadFromDisk(file);
@@ -110,13 +117,41 @@ public class JasyptUI {
                     } catch (Exception e) {
                         String errorMessage = "处理文件失败: " + file.getName() + "\n" + e.getMessage();
                         NotificationGroupManager.getInstance()
-                                .getNotificationGroup("YAML Processing")
+                                .getNotificationGroup("Config Processing")
                                 .createNotification(errorMessage, NotificationType.ERROR)
                                 .notify(project);
+                        throw new RuntimeException(errorMessage, e);
                     }
                 }
+                JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
+
             }
         });
+    }
+
+    /**
+     * 处理目录中的所有支持的文件
+     * @param directory 目录文件对象
+     * @throws Exception 处理异常
+     */
+    private void processDirectory(VirtualFile directory) throws Exception {
+        YmlProcessor.processYmlFileOrDirectory(directory.toNioPath());
+        PropertiesProcessor.processPropertiesDirectory(directory.toNioPath());
+    }
+
+    /**
+     * 根据文件类型处理单个文件
+     * @param file 文件对象
+     * @throws Exception 处理异常
+     */
+    private void processFile(VirtualFile file) throws Exception {
+        String extension = file.getExtension();
+        if ("yml".equalsIgnoreCase(extension) || "yaml".equalsIgnoreCase(extension)) {
+            YmlProcessor.processYmlFileOrDirectory(file.toNioPath());
+        } else if ("properties".equalsIgnoreCase(extension)) {
+            // 使用属性文件处理器
+            PropertiesProcessor.processPropertiesFile(file.toNioPath());
+        }
     }
 
     /**

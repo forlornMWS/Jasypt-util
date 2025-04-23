@@ -12,21 +12,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import xyz.mwszksnmdys.demoplugin.util.YmlProcessor;
+import xyz.mwszksnmdys.demoplugin.util.PropertiesProcessor;
 
 import javax.swing.*;
 import java.util.Arrays;
 
 /**
- * YAML文件处理操作的Action类
+ * 配置文件处理操作的Action类
  */
 public class PopupJasyptAction extends AnAction {
 
     public PopupJasyptAction() {
         // 在构造函数中初始化Action的表现形式
         Presentation presentation = getTemplatePresentation();
-        presentation.setText("Encrypt/Decrypt Yaml");
-        presentation.setDescription("Process(Encrypt/Decrypt) YAML files");
-        presentation.setIcon(AllIcons.FileTypes.Yaml);
+        presentation.setText("Encrypt/Decrypt Config");
+        presentation.setDescription("Process(Encrypt/Decrypt) YAML and Properties files");
+        presentation.setIcon(AllIcons.General.Settings);
     }
 
     @Override
@@ -48,13 +49,11 @@ public class PopupJasyptAction extends AnAction {
     public @NotNull ActionUpdateThread getActionUpdateThread() {
         // 返回EDT（Event Dispatch Thread）以确保UI更新的线程安全
         return ActionUpdateThread.BGT;
-
     }
-
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-        // 只有当选中的是YAML文件或目录时才启用此Action
+        // 只有当选中的是YAML/Properties文件或目录时才启用此Action
         Project project = e.getProject();
         if (project == null) {
             e.getPresentation().setEnabledAndVisible(false);
@@ -66,13 +65,24 @@ public class PopupJasyptAction extends AnAction {
 
         if (files != null && files.length > 0) {
             enabled = Arrays.stream(files).allMatch(file ->
-                file.isDirectory() || 
-                "yml".equalsIgnoreCase(file.getExtension()) || 
-                "yaml".equalsIgnoreCase(file.getExtension())
+                    file.isDirectory() ||
+                            isSupportedFile(file)
             );
         }
 
         e.getPresentation().setEnabledAndVisible(enabled);
+    }
+
+    /**
+     * 检查文件是否为支持的类型
+     * @param file 文件对象
+     * @return 是否支持
+     */
+    private boolean isSupportedFile(VirtualFile file) {
+        String extension = file.getExtension();
+        return "yml".equalsIgnoreCase(extension) ||
+                "yaml".equalsIgnoreCase(extension) ||
+                "properties".equalsIgnoreCase(extension);
     }
 
     /**
@@ -81,7 +91,7 @@ public class PopupJasyptAction extends AnAction {
      * @param selectedFiles 选中的文件数组
      */
     private void processSelectedFiles(@NotNull Project project, @NotNull VirtualFile[] selectedFiles) {
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "处理YAML文件", true) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, "处理配置文件", true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
                 indicator.setIndeterminate(false);
@@ -93,7 +103,13 @@ public class PopupJasyptAction extends AnAction {
                     indicator.setFraction((double) i / totalFiles);
 
                     try {
-                        YmlProcessor.processYmlFileOrDirectory(file.toNioPath());
+                        if (file.isDirectory()) {
+                            // 处理目录
+                            processDirectory(file);
+                        } else {
+                            // 根据文件类型处理单个文件
+                            processFile(file);
+                        }
 
                         // 在EDT中刷新文件
                         ApplicationManager.getApplication().invokeLater(() -> {
@@ -102,12 +118,38 @@ public class PopupJasyptAction extends AnAction {
                     } catch (Exception e) {
                         String errorMessage = "处理文件失败: " + file.getName() + "\n" + e.getMessage();
                         NotificationGroupManager.getInstance()
-                                .getNotificationGroup("YAML Processing")
+                                .getNotificationGroup("Config Processing")
                                 .createNotification(errorMessage, NotificationType.ERROR)
                                 .notify(project);
+                        throw new RuntimeException(errorMessage, e);
                     }
                 }
             }
         });
+    }
+
+    /**
+     * 处理目录中的所有支持的文件
+     * @param directory 目录文件对象
+     * @throws Exception 处理异常
+     */
+    private void processDirectory(VirtualFile directory) throws Exception {
+        YmlProcessor.processYmlFileOrDirectory(directory.toNioPath());
+         PropertiesProcessor.processPropertiesDirectory(directory.toNioPath());
+        JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    /**
+     * 根据文件类型处理单个文件
+     * @param file 文件对象
+     */
+    private void processFile(VirtualFile file) {
+        String extension = file.getExtension();
+        if ("yml".equalsIgnoreCase(extension) || "yaml".equalsIgnoreCase(extension)) {
+            YmlProcessor.processYmlFileOrDirectory(file.toNioPath());
+        } else if ("properties".equalsIgnoreCase(extension)) {
+            // 使用属性文件处理器
+            PropertiesProcessor.processPropertiesFile(file.toNioPath());
+        }
     }
 }

@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+
+## [1.0.7] - 2025-04-23
+
+### Added
+- Added support for processing properties files
+
+### Fixed
+
+- Fixed some known bugs
+
+
 ## [1.0.6] - 2025-04-20
 
 ### Added

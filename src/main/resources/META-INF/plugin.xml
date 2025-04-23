@@ -22,7 +22,7 @@
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-        <notificationGroup id="YAML Processing"
+        <notificationGroup id="Config Processing"
                            displayType="BALLOON" />
     </extensions>
     <actions>

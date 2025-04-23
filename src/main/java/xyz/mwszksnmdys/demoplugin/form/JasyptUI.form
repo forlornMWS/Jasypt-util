@@ -114,7 +114,7 @@
               <component id="newButton" class="javax.swing.JButton" binding="processYmlButton">
                 <constraints border-constraint="West"/>
                 <properties>
-                  <text value="process yml"/>
+                  <text value="process configs"/>
                 </properties>
               </component>
             </children>
