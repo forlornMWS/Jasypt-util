@@ -1,4 +1,4 @@
-package xyz.mwszksnmdys.demoplugin.action;
+package xyz.mwszksnmdys.plugin.jasypt.action;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.NotificationGroupManager;
@@ -11,8 +11,9 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import xyz.mwszksnmdys.demoplugin.util.YmlProcessor;
-import xyz.mwszksnmdys.demoplugin.util.PropertiesProcessor;
+import xyz.mwszksnmdys.plugin.jasypt.i18n.JasyptBundle;
+import xyz.mwszksnmdys.plugin.jasypt.util.YmlProcessor;
+import xyz.mwszksnmdys.plugin.jasypt.util.PropertiesProcessor;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -25,8 +26,8 @@ public class PopupJasyptAction extends AnAction {
     public PopupJasyptAction() {
         // 在构造函数中初始化Action的表现形式
         Presentation presentation = getTemplatePresentation();
-        presentation.setText("Encrypt/Decrypt Config");
-        presentation.setDescription("Process(Encrypt/Decrypt) YAML and Properties files");
+        presentation.setText(JasyptBundle.message("popup.presentation.text"));
+        presentation.setDescription(JasyptBundle.message("popup.presentation.desc"));
         presentation.setIcon(AllIcons.General.Settings);
     }
 
@@ -34,7 +35,7 @@ public class PopupJasyptAction extends AnAction {
     public void actionPerformed(@NotNull AnActionEvent e) {
         Project project = e.getProject();
         if (project == null) {
-            JOptionPane.showMessageDialog(null, "获取项目失败!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, JasyptBundle.message("popup.error.getProject.message"), "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -91,7 +92,7 @@ public class PopupJasyptAction extends AnAction {
      * @param selectedFiles 选中的文件数组
      */
     private void processSelectedFiles(@NotNull Project project, @NotNull VirtualFile[] selectedFiles) {
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "处理配置文件", true) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, JasyptBundle.message("popup.task.background.title"), true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
                 indicator.setIndeterminate(false);
@@ -99,7 +100,7 @@ public class PopupJasyptAction extends AnAction {
 
                 for (int i = 0; i < totalFiles; i++) {
                     VirtualFile file = selectedFiles[i];
-                    indicator.setText("正在处理: " + file.getName());
+                    indicator.setText(JasyptBundle.message("popup.task.background.indicator.text",file.getName()));
                     indicator.setFraction((double) i / totalFiles);
 
                     try {
@@ -116,7 +117,7 @@ public class PopupJasyptAction extends AnAction {
                             file.refresh(false, false);
                         });
                     } catch (Exception e) {
-                        String errorMessage = "处理文件失败: " + file.getName() + "\n" + e.getMessage();
+                        String errorMessage = JasyptBundle.message("popup.task.background.errorMessage") + file.getName() + "\n" + e.getMessage();
                         NotificationGroupManager.getInstance()
                                 .getNotificationGroup("Config Processing")
                                 .createNotification(errorMessage, NotificationType.ERROR)
@@ -136,7 +137,7 @@ public class PopupJasyptAction extends AnAction {
     private void processDirectory(VirtualFile directory) throws Exception {
         YmlProcessor.processYmlFileOrDirectory(directory.toNioPath());
          PropertiesProcessor.processPropertiesDirectory(directory.toNioPath());
-        JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(null, JasyptBundle.message("popup.task.process.directory.success"), "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**

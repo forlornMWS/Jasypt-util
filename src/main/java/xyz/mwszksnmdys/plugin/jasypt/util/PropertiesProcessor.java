@@ -1,9 +1,10 @@
-package xyz.mwszksnmdys.demoplugin.util;
+package xyz.mwszksnmdys.plugin.jasypt.util;
 
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.mwszksnmdys.plugin.jasypt.i18n.JasyptBundle;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class PropertiesProcessor {
             } else {
                 logger.error("Selected file is not a Properties file: {}", path);
                 JOptionPane.showMessageDialog(null,
-                        "Selected file is not a Properties file: " + path,
+                        JasyptBundle.message("properties.processor.error.notProperties", path),
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
                 throw new RuntimeException("Selected file is not a Properties file: " + path);
@@ -47,12 +48,12 @@ public class PropertiesProcessor {
         } catch (Exception e) {
             logger.error("Error processing path: {}", path, e);
             JOptionPane.showMessageDialog(null,
-                    "Error processing path: " + path,
+                    JasyptBundle.message("properties.processor.error.processPath", path),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
             throw new RuntimeException(e.getMessage(), e);
         }
-        JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(null, JasyptBundle.message("properties.processor.operationSuccess"), "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**
@@ -144,7 +145,7 @@ public class PropertiesProcessor {
         } catch (Exception e) {
             logger.error("Failed to process Properties file: {}", propertiesPath, e);
             JOptionPane.showMessageDialog(null,
-                    "Failed to process Properties file: " + propertiesPath,
+                    JasyptBundle.message("properties.processor.error.processFile", propertiesPath),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
             throw new RuntimeException(e.getMessage(), e);

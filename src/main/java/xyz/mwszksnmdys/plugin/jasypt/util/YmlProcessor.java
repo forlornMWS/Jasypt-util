@@ -1,4 +1,4 @@
-package xyz.mwszksnmdys.demoplugin.util;
+package xyz.mwszksnmdys.plugin.jasypt.util;
 
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;

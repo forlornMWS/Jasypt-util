@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="xyz.mwszksnmdys.plugin.jasypt.form.JasyptDialogForm">
+  <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="8" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="10" left="10" bottom="10" right="10"/>
+    <constraints>
+      <xy x="20" y="19" width="727" height="401"/>
+    </constraints>
+    <properties>
+      <preferredSize width="450" height="320"/>
+    </properties>
+    <border type="none"/>
+    <children>
+      <component id="f8e90" class="javax.swing.JLabel" binding="operationTypeLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="70" height="17"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/messages" key="dialog.operationTypeLabel"/>
+        </properties>
+      </component>
+      <component id="6a3e5" class="javax.swing.JComboBox" binding="operationTypeComboBox">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <model>
+            <item value="Encryption"/>
+            <item value="Decryption"/>
+          </model>
+        </properties>
+      </component>
+      <component id="e0f7a" class="javax.swing.JLabel" binding="passwordLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="70" height="17"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="Password:"/>
+        </properties>
+      </component>
+      <component id="5ab7d" class="javax.swing.JLabel" binding="algorithmLabel">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="70" height="17"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="Algorithm:"/>
+        </properties>
+      </component>
+      <component id="da9f7" class="javax.swing.JComboBox" binding="algorithmComboBox">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <model/>
+        </properties>
+      </component>
+      <component id="cea46" class="javax.swing.JCheckBox" binding="encSurroundCheckBox">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <selected value="true"/>
+          <text value="Surrounded with ENC()"/>
+        </properties>
+      </component>
+      <component id="9ca4d" class="javax.swing.JCheckBox" binding="rememberPasswordCheckBox">
+        <constraints>
+          <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Remember Password (this session)"/>
+        </properties>
+      </component>
+      <component id="c7878" class="javax.swing.JLabel" binding="originalTextLabel">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="70" height="17"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="Original Text:"/>
+        </properties>
+      </component>
+      <scrollpane id="15ccf">
+        <constraints>
+          <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="-1" height="60"/>
+          </grid>
+        </constraints>
+        <properties/>
+        <border type="etched"/>
+        <children>
+          <component id="dfdea" class="javax.swing.JTextArea" binding="originalTextArea">
+            <constraints/>
+            <properties>
+              <editable value="false"/>
+              <lineWrap value="true"/>
+              <wrapStyleWord value="true"/>
+            </properties>
+          </component>
+        </children>
+      </scrollpane>
+      <component id="d2cd" class="javax.swing.JLabel" binding="previewLabel">
+        <constraints>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="70" height="59"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="Preview:"/>
+        </properties>
+      </component>
+      <scrollpane id="7cbe0">
+        <constraints>
+          <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="373" height="59"/>
+          </grid>
+        </constraints>
+        <properties/>
+        <border type="etched"/>
+        <children>
+          <component id="d7456" class="javax.swing.JTextArea" binding="previewTextArea">
+            <constraints/>
+            <properties>
+              <editable value="false"/>
+              <lineWrap value="true"/>
+              <wrapStyleWord value="true"/>
+            </properties>
+          </component>
+        </children>
+      </scrollpane>
+      <grid id="2d6c" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="16f60" class="javax.swing.JButton" binding="previewButton" default-binding="true">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Preview"/>
+            </properties>
+          </component>
+          <hspacer id="18d7a">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
+          <hspacer id="661f7">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
+        </children>
+      </grid>
+      <component id="3d55e" class="javax.swing.JTextField" binding="secretKeyField">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+    </children>
+  </grid>
+</form>

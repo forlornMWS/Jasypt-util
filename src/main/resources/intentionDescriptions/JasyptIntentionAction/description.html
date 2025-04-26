@@ -1,0 +1,44 @@
+<html>
+<body>
+<h2>
+    Encrypts selected text using Jasypt encryption library.
+</h2>
+<p>
+    This intention allows you to quickly encrypt sensitive information in your code or configuration files using the
+    Jasypt encryption library, which is commonly used in Java applications for securing configuration values.
+</p>
+<p>
+    Select the text you want to encrypt, invoke the intention, and provide a secret key and algorithm to encrypt the
+    value:
+</p>
+<pre><code>
+// Before:
+spring.datasource.password=my secret password
+
+// After:
+spring.datasource.password=ENC(G6N048DiLbTjUBOMrNhGAvxCyPwYQV1sVoQtQUiZYmytP34mbMy5DA==)
+</code></pre>
+<!-- tooltip end -->
+<p>This intention is particularly useful when working with Spring applications that use Jasypt for property
+    encryption.</p>
+
+<p>The encrypted value can be configured with or without the "ENC()" wrapper, depending on your application's
+    requirements.</p>
+
+<p>Support PBE Algorithm</p>
+<ul>
+    <li>PBEWithMD5AndDES</li>
+    <li>PBEWithSHA1AndDES</li>
+    <li>PBEWithSHA1AndRC2_40</li>
+    <li>PBEWithSHA1AndRC4_128</li>
+    <li>PBEWithSHA1AndRC4_40</li>
+    <li>PBEWithHmacSHA512AndAES_256</li>
+    <li>PBEWithHmacSHA512AndDES3</li>
+    <li>PBEWithHmacSHA512AndRC2_128</li>
+    <li>PBEWithHmacSHA512AndRC4_128</li>
+    <li>PBEWithHmacSHA512AndRC4_40</li>
+</ul>
+
+<p>To customize the default encryption settings for this plugin, visit <a href="settings://">Plugin Settings</a>.</p>
+</body>
+</html>

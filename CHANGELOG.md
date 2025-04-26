@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [1.0.8] - 2025-04-26
+
+### Added
+- Added internationalization (i18n) support
+- Added support for file intention detection
+
+### Fixed
+- Fixed known issues
+
 
 ## [1.0.7] - 2025-04-23
 

@@ -38,6 +38,10 @@ jasypt:
     - 在项目视图中右键选择 YAML 文件或目录
     - 选择 `Encrypt/Decrypt Yaml`
     - 插件将自动处理选中的文件
+- **方式三：文件中的快捷键**
+    - 在文件中选中需要加密或解密的文本
+    - 使用快捷键 `Alt + Enter` 打开意图菜单选择 `Encrypt/Decrypt text with Jasypt`
+    - 打开窗口填写内容后操作
 
 ### 3. 环境变量支持
 
@@ -64,9 +68,15 @@ git clone https://github.com/yourusername/jasypt-tool-plugin.git
 ```
 
 3. 安装插件：
-- 在 IDEA 中，进入 `Settings/Preferences -> Plugins`
-- 选择 `Install Plugin from Disk`
-- 选择构建生成的插件文件（位于 `build/distributions` 目录）
+- 从 IntelliJ IDEA 插件市场安装
+  - 打开 IntelliJ IDEA
+  - 进入 `Settings/Preferences -> Plugins`
+  - 搜索 `Jasypt Tool` 并安装
+- 本地安装
+  - 在 IDEA 中，进入 `Settings/Preferences -> Plugins`
+  - 选择 `Install Plugin from Disk`
+  - 选择构建生成的插件文件（位于 `build/distributions` 目录）或从Release下载
+
 
 ## 贡献指南
 

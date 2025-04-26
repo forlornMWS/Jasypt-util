@@ -1,9 +1,10 @@
-package xyz.mwszksnmdys.demoplugin.action;
+package xyz.mwszksnmdys.plugin.jasypt.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import xyz.mwszksnmdys.demoplugin.form.JasyptUI;
+import xyz.mwszksnmdys.plugin.jasypt.form.JasyptUI;
+import xyz.mwszksnmdys.plugin.jasypt.i18n.JasyptBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +18,7 @@ public class JasyptAction extends AnAction {
             return;
         }
         // 创建一个非模态窗口
-        JDialog dialog = new JDialog((JFrame) null, "Jasypt Encrypt/Decrypt Tool", false);
+        JDialog dialog = new JDialog((JFrame) null, JasyptBundle.message("toolbar.dialog.ui.title"), false);
         dialog.getRootPane().setWindowDecorationStyle(JRootPane.PLAIN_DIALOG);
 
         // 设置对话框背景与系统颜色一致
@@ -33,4 +34,5 @@ public class JasyptAction extends AnAction {
         dialog.setVisible(true);
 
     }
+
 }

@@ -1,9 +1,10 @@
-package xyz.mwszksnmdys.demoplugin.util;
+package xyz.mwszksnmdys.plugin.jasypt.util;
 
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.mwszksnmdys.plugin.jasypt.i18n.JasyptBundle;
 
 import javax.swing.*;
 import java.util.Map;
@@ -26,8 +27,8 @@ public class JasyptEncryptor {
         Object encryptorConfig = jasyptConfig.get("encryptor");
         Map<String, Object> encryptorConfigMap = (Map<String, Object>) encryptorConfig;
         if (encryptorConfig == null || encryptorConfigMap.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Jasypt配置错误", "Error", JOptionPane.ERROR_MESSAGE);
-            throw new RuntimeException("Jasypt配置错误");
+            JOptionPane.showMessageDialog(null, JasyptBundle.message("encryptor.error.configuration"), "Error", JOptionPane.ERROR_MESSAGE);
+            throw new RuntimeException("Jasypt Configuration Error");
         }
         
         PooledPBEStringEncryptor encryptor = new PooledPBEStringEncryptor();
@@ -39,8 +40,8 @@ public class JasyptEncryptor {
         String ivGenClsName = (String) encryptorConfigMap.get("iv-generator-classname");
 
         if (password == null) {
-            JOptionPane.showMessageDialog(null, "配置文件读取密钥为空", "Error", JOptionPane.ERROR_MESSAGE);
-            throw new RuntimeException("配置文件读取密钥为空");
+            JOptionPane.showMessageDialog(null, JasyptBundle.message("encryptor.error.configuration.readPassword.empty"), "Error", JOptionPane.ERROR_MESSAGE);
+            throw new RuntimeException("Password is null");
         } else {
             if (VARIABLE_PATTERN.matcher(password).matches()) {
                 String envKey = password.substring(2, password.indexOf('}'));
@@ -58,8 +59,8 @@ public class JasyptEncryptor {
                 }
 
                 if (password == null) {
-                    JOptionPane.showMessageDialog(null, "环境变量 " + envKey + " 未设置且无默认值", "Error", JOptionPane.ERROR_MESSAGE);
-                    throw new RuntimeException("环境变量 " + envKey + " 未设置且无默认值");
+                    JOptionPane.showMessageDialog(null, JasyptBundle.message("encryptor.error.configuration.env.empty", envKey), "Error", JOptionPane.ERROR_MESSAGE);
+                    throw new RuntimeException("Environment value " + envKey + " not configured and no default value");
                 }
             }
         }
@@ -84,13 +85,14 @@ public class JasyptEncryptor {
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException("加载 SaltGenerator 或 IvGenerator 失败", e);
+            throw new RuntimeException("Loading SaltGenerator or IvGenerator fail", e);
         }
 
         config.setStringOutputType("base64");
         encryptor.setConfig(config);
         return encryptor;
     }
+
     
     /**
      * 加密字符串

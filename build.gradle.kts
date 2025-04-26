@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "xyz.mwszksnmdys"
-version = "1.0.7"
+version = "1.0.8"
 
 repositories {
     mavenCentral()
@@ -20,7 +20,7 @@ intellij {
     version.set("2023.2.8")
     type.set("IC") // Target IDE Platform
 
-    plugins.set(listOf("java","yaml"))
+    plugins.set(listOf("java", "yaml"))
 }
 
 dependencies {
@@ -59,6 +59,13 @@ tasks {
     publishPlugin {
         token.set(System.getenv("PUBLISH_TOKEN"))
     }
+
+    processResources {
+        filesMatching("**/*.properties") {
+            filteringCharset = "UTF-8"
+        }
+    }
+
 
     patchPluginXml {
         sinceBuild.set("232")

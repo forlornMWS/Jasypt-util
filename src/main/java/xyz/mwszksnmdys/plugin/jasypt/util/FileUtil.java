@@ -1,4 +1,4 @@
-package xyz.mwszksnmdys.demoplugin.util;
+package xyz.mwszksnmdys.plugin.jasypt.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -77,7 +77,7 @@ public class FileUtil {
             latch.await(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IOException("写入操作被中断", e);
+            throw new IOException("write operation interrupted", e);
         }
     }
 

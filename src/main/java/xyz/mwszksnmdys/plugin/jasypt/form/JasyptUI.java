@@ -1,4 +1,4 @@
-package xyz.mwszksnmdys.demoplugin.form;
+package xyz.mwszksnmdys.plugin.jasypt.form;
 
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -15,17 +15,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import lombok.Getter;
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
-import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
-import org.jasypt.salt.RandomSaltGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import xyz.mwszksnmdys.demoplugin.util.PropertiesProcessor;
-import xyz.mwszksnmdys.demoplugin.util.YmlProcessor;
+import xyz.mwszksnmdys.plugin.jasypt.i18n.JasyptBundle;
+import xyz.mwszksnmdys.plugin.jasypt.util.EncryptorFactory;
+import xyz.mwszksnmdys.plugin.jasypt.util.PropertiesProcessor;
+import xyz.mwszksnmdys.plugin.jasypt.util.YmlProcessor;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -41,17 +42,49 @@ public class JasyptUI {
     private JButton decryptButton;
     private JPanel centerJpanel;
     private JPanel buttonJpanel;
-    private JButton processYmlButton;
+    private JButton processConfigButton;
+
+    private JLabel keyLabel;
+    private JLabel textLabel;
+    private JLabel algorithmLabel;
+    private JLabel resultLabel;
 
     private Project project;
 
     private JasyptUI() {
-        algorithmBox.addItem("PBEWithMD5AndDES");
-        algorithmBox.addItem("PBEWithHMACSHA512AndAES_256");
+        initAlgorithmComboBox();
 
+        initUIText();
         encryptButton.addActionListener(e -> handleEncryption(true));
         decryptButton.addActionListener(e -> handleEncryption(false));
-        processYmlButton.addActionListener(e -> handleSelectFile());
+        processConfigButton.addActionListener(e -> handleSelectFile());
+    }
+
+    /**
+     * 初始化算法下拉框，填充所有支持的PBE算法
+     */
+    private void initAlgorithmComboBox() {
+        // 从工厂类获取所有支持的PBE算法
+        List<String> algorithms = EncryptorFactory.getSupportedPBEAlgorithms();
+
+        // 清空现有项并添加支持的算法
+        algorithmBox.removeAllItems();
+        for (String algorithm : algorithms) {
+            algorithmBox.addItem(algorithm);
+        }
+    }
+
+    /**
+     * 初始化标签文本
+     */
+    private void initUIText() {
+        keyLabel.setText(JasyptBundle.message("toolbar.dialog.ui.secretKey"));
+        textLabel.setText(JasyptBundle.message("toolbar.dialog.ui.text"));
+        algorithmLabel.setText(JasyptBundle.message("toolbar.dialog.ui.algorithm"));
+        resultLabel.setText(JasyptBundle.message("toolbar.dialog.ui.result"));
+        processConfigButton.setText(JasyptBundle.message("toolbar.dialog.ui.btn.config"));
+        encryptButton.setText(JasyptBundle.message("toolbar.dialog.ui.btn.encrypt"));
+        decryptButton.setText(JasyptBundle.message("toolbar.dialog.ui.btn.decrypt"));
     }
 
     public JasyptUI(Project project) {
@@ -61,13 +94,13 @@ public class JasyptUI {
 
     private void handleSelectFile() {
         if (project == null) {
-            JOptionPane.showMessageDialog(null, "获取项目失败!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, JasyptBundle.message("popup.error.getProject.message"), "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true)
-                .withTitle("选择文件或目录")
-                .withDescription("请选择.yml|.yaml|.properties文件和目录, 支持多选")
+                .withTitle(JasyptBundle.message("toolbar.dialog.descriptor.title"))
+                .withDescription(JasyptBundle.message("toolbar.dialog.descriptor.description"))
                 .withFileFilter(file -> {
                     String extension = file.getExtension();
                     return file.isDirectory() ||
@@ -91,7 +124,7 @@ public class JasyptUI {
      * @param selectedFiles 选中的文件数组
      */
     private void processSelectedFiles(@NotNull VirtualFile[] selectedFiles) {
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "处理Config文件", true) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, JasyptBundle.message("popup.task.background.title"), true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
                 indicator.setIndeterminate(false);
@@ -99,7 +132,7 @@ public class JasyptUI {
 
                 for (int i = 0; i < totalFiles; i++) {
                     VirtualFile file = selectedFiles[i];
-                    indicator.setText("正在处理: " + file.getName());
+                    indicator.setText(JasyptBundle.message("popup.task.background.indicator.text", file.getName()));
                     indicator.setFraction((double) i / totalFiles);
 
                     try {
@@ -115,7 +148,7 @@ public class JasyptUI {
                             reloadFromDisk(file);
                         });
                     } catch (Exception e) {
-                        String errorMessage = "处理文件失败: " + file.getName() + "\n" + e.getMessage();
+                        String errorMessage = JasyptBundle.message("popup.task.background.errorMessage")+ file.getName() + "\n" + e.getMessage();
                         NotificationGroupManager.getInstance()
                                 .getNotificationGroup("Config Processing")
                                 .createNotification(errorMessage, NotificationType.ERROR)
@@ -123,7 +156,7 @@ public class JasyptUI {
                         throw new RuntimeException(errorMessage, e);
                     }
                 }
-                JOptionPane.showMessageDialog(null, "操作成功.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(null, JasyptBundle.message("popup.task.process.directory.success"), "Success", JOptionPane.INFORMATION_MESSAGE);
 
             }
         });
@@ -224,7 +257,8 @@ public class JasyptUI {
         PooledPBEStringEncryptor encryptor = getEncryptor();
 
         if (text.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "文本不能为空!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, JasyptBundle.message("toolbar.dialog.validate.text"), "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
         if (encryptor == null) return;
@@ -243,38 +277,12 @@ public class JasyptUI {
     private @Nullable PooledPBEStringEncryptor getEncryptor() {
         String key = this.getKeyField().getText().trim();
         String algorithm = (String) this.getAlgorithmBox().getSelectedItem();
-        if (key.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "密钥不能为空!", "Error", JOptionPane.ERROR_MESSAGE);
-            return null;
-        }
-        if (algorithm == null || algorithm.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "算法不能为空!", "Error", JOptionPane.ERROR_MESSAGE);
-            return null;
-        }
-
-        PooledPBEStringEncryptor encryptor = new PooledPBEStringEncryptor();
-        SimpleStringPBEConfig config = new SimpleStringPBEConfig();
-        config.setPassword(key);
-        config.setAlgorithm(algorithm);
-        config.setKeyObtentionIterations("1000");
-        config.setPoolSize("1");
-
-        config.setSaltGenerator(new RandomSaltGenerator());
-
-        if (algorithm.contains("AES")) {
-            config.setIvGenerator(new org.jasypt.iv.RandomIvGenerator());
-        } else {
-            config.setIvGenerator(new org.jasypt.iv.NoIvGenerator());
-        }
-
-        config.setStringOutputType("base64");
-        encryptor.setConfig(config);
-        return encryptor;
+        return EncryptorFactory.createPBEEncryptor(key, algorithm, null, null, null);
     }
 
     private void copyToClipboard(String text) {
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         clipboard.setContents(new StringSelection(text), null);
-        JOptionPane.showMessageDialog(this.getResultField(), "结果已拷贝到剪切板！", "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this.getResultField(), JasyptBundle.message("toolbar.dialog.resultCopied"), "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 }
