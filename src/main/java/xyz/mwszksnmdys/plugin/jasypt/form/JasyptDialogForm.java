@@ -42,7 +42,7 @@ public class JasyptDialogForm {
     // 默认算法
     private static final String DEFAULT_ALGORITHM = "PBEWithMD5AndDES";
 
-    public JasyptDialogForm(String text, boolean defaultIsEncryption, Project project) {
+    public JasyptDialogForm(String text, boolean defaultIsEncryption, Project project, String password, String algorithm) {
         this.originalText = text;
         this.isEncryption = defaultIsEncryption;
         this.project = project;
@@ -64,6 +64,22 @@ public class JasyptDialogForm {
 
         // 从持久化存储恢复设置
         loadSavedSettings();
+
+        // 如果算法为默认值且密码为空，且intention触发的文件是 yaml或properties文件，从文件中读取密钥和算法
+        if (secretKeyField.getText().isEmpty() && DEFAULT_ALGORITHM.equals(algorithmComboBox.getSelectedItem())) {
+            if (password != null && !password.isEmpty()) {
+                secretKeyField.setText(password);
+            }
+            if (algorithm != null && !algorithm.isEmpty()) {
+                // 确保算法在下拉列表中
+                for (int i = 0; i < algorithmComboBox.getItemCount(); i++) {
+                    if (algorithmComboBox.getItemAt(i).equals(algorithm)) {
+                        algorithmComboBox.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+        }
 
         // 为预览按钮添加事件监听器
         previewButton.addActionListener(e -> updatePreview());

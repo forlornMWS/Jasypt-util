@@ -2,6 +2,7 @@ package xyz.mwszksnmdys.plugin.jasypt.util;
 
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.mwszksnmdys.plugin.jasypt.i18n.JasyptBundle;
@@ -43,26 +44,7 @@ public class JasyptEncryptor {
             JOptionPane.showMessageDialog(null, JasyptBundle.message("encryptor.error.configuration.readPassword.empty"), "Error", JOptionPane.ERROR_MESSAGE);
             throw new RuntimeException("Password is null");
         } else {
-            if (VARIABLE_PATTERN.matcher(password).matches()) {
-                String envKey = password.substring(2, password.indexOf('}'));
-                String defaultValue = null;
-
-                if (password.contains(":")) {
-                    defaultValue = password.substring(password.indexOf(':') + 1, password.length() - 1);
-                    envKey = envKey.substring(0, envKey.indexOf(':'));
-                }
-
-                password = System.getenv(envKey);
-
-                if (password == null && defaultValue != null) {
-                    password = defaultValue;
-                }
-
-                if (password == null) {
-                    JOptionPane.showMessageDialog(null, JasyptBundle.message("encryptor.error.configuration.env.empty", envKey), "Error", JOptionPane.ERROR_MESSAGE);
-                    throw new RuntimeException("Environment value " + envKey + " not configured and no default value");
-                }
-            }
+            password = parsePasswordFromEnvironment(password);
         }
 
         config.setPassword(password);
@@ -93,7 +75,31 @@ public class JasyptEncryptor {
         return encryptor;
     }
 
-    
+    public static @NotNull String parsePasswordFromEnvironment(String password) {
+        if (VARIABLE_PATTERN.matcher(password).matches()) {
+            String envKey = password.substring(2, password.indexOf('}'));
+            String defaultValue = null;
+
+            if (password.contains(":")) {
+                defaultValue = password.substring(password.indexOf(':') + 1, password.length() - 1);
+                envKey = envKey.substring(0, envKey.indexOf(':'));
+            }
+
+            password = System.getenv(envKey);
+
+            if (password == null && defaultValue != null) {
+                password = defaultValue;
+            }
+
+            if (password == null) {
+                JOptionPane.showMessageDialog(null, JasyptBundle.message("encryptor.error.configuration.env.empty", envKey), "Error", JOptionPane.ERROR_MESSAGE);
+                throw new RuntimeException("Environment value " + envKey + " not configured and no default value");
+            }
+        }
+        return password;
+    }
+
+
     /**
      * 加密字符串
      * @param encryptor Jasypt加密器

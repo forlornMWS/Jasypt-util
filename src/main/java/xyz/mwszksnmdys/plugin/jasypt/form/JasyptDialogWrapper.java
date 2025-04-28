@@ -11,10 +11,10 @@ import javax.swing.*;
 public class JasyptDialogWrapper extends DialogWrapper {
     private final JasyptDialogForm form;
 
-    public JasyptDialogWrapper(Project project, String text, boolean defaultIsEncryption) {
+    public JasyptDialogWrapper(Project project, String text, boolean defaultIsEncryption, String password, String algorithm) {
         super(project);
         setTitle(JasyptBundle.message("dialog.title"));
-        this.form = new JasyptDialogForm(text, defaultIsEncryption, project);
+        this.form = new JasyptDialogForm(text, defaultIsEncryption, project, password, algorithm);
         init();
     }
 

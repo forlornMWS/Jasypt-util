@@ -159,7 +159,7 @@ public class PropertiesProcessor {
      * @param propertiesPath Properties文件路径
      * @return Jasypt配置Map
      */
-    private static Map<String, Object> getJasyptConfig(Path propertiesPath) {
+    public static Map<String, Object> getJasyptConfig(Path propertiesPath) {
         try {
             // 首先尝试从当前properties文件获取配置
             Properties currentProperties = loadPropertiesFile(propertiesPath);
