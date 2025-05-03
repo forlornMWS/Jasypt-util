@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.0.9] - 2025-05-03
+
+### Added
+- Added support for reading password and algorithm from YAML and properties files for intention action
+- handle credential conflicts between saved settings and config file
+
+
 ## [1.0.8] - 2025-04-26
 
 ### Added

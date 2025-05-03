@@ -3,6 +3,7 @@ package xyz.mwszksnmdys.plugin.jasypt.form;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import lombok.Getter;
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import xyz.mwszksnmdys.plugin.jasypt.i18n.JasyptBundle;
@@ -62,24 +63,8 @@ public class JasyptDialogForm {
         // 根据操作类型调整UI
         updateUIForOperationType();
 
-        // 从持久化存储恢复设置
-        loadSavedSettings();
-
-        // 如果算法为默认值且密码为空，且intention触发的文件是 yaml或properties文件，从文件中读取密钥和算法
-        if (secretKeyField.getText().isEmpty() && DEFAULT_ALGORITHM.equals(algorithmComboBox.getSelectedItem())) {
-            if (password != null && !password.isEmpty()) {
-                secretKeyField.setText(password);
-            }
-            if (algorithm != null && !algorithm.isEmpty()) {
-                // 确保算法在下拉列表中
-                for (int i = 0; i < algorithmComboBox.getItemCount(); i++) {
-                    if (algorithmComboBox.getItemAt(i).equals(algorithm)) {
-                        algorithmComboBox.setSelectedIndex(i);
-                        break;
-                    }
-                }
-            }
-        }
+        // 从持久化存储恢复设置并处理潜在的冲突
+        handleCredentialConflicts(password, algorithm);
 
         // 为预览按钮添加事件监听器
         previewButton.addActionListener(e -> updatePreview());
@@ -97,9 +82,9 @@ public class JasyptDialogForm {
     }
 
     /**
-     * 从持久化存储加载保存的设置
+     * 处理配置文件和已保存凭据之间的冲突
      */
-    private void loadSavedSettings() {
+    private void handleCredentialConflicts(String configFilePassword, String configFileAlgorithm) {
         PropertiesComponent properties = PropertiesComponent.getInstance();
         boolean shouldRemember = properties.getBoolean(KEY_REMEMBER_PASSWORD, false);
 
@@ -107,15 +92,102 @@ public class JasyptDialogForm {
             String savedPassword = properties.getValue(KEY_PASSWORD, "");
             String savedAlgorithm = properties.getValue(KEY_ALGORITHM, DEFAULT_ALGORITHM);
 
-            secretKeyField.setText(savedPassword);
-            rememberPasswordCheckBox.setSelected(true);
+            // 检查是否有冲突（密码或算法至少有一个不同）
+            boolean passwordConflict = configFilePassword != null && !configFilePassword.isEmpty() && !configFilePassword.equals(savedPassword);
+            boolean algorithmConflict = configFileAlgorithm != null && !configFileAlgorithm.isEmpty() && !configFileAlgorithm.equals(savedAlgorithm);
 
-            // 确保保存的算法在下拉列表中
-            for (int i = 0; i < algorithmComboBox.getItemCount(); i++) {
-                if (algorithmComboBox.getItemAt(i).equals(savedAlgorithm)) {
-                    algorithmComboBox.setSelectedIndex(i);
-                    break;
+            if (passwordConflict || algorithmConflict) {
+                // 构建冲突提示消息
+                StringBuilder message = new StringBuilder(JasyptBundle.message("credential.different.found") + "\n\n");
+
+                if (passwordConflict) {
+                    message.append(JasyptBundle.message("credential.password")).append(":\n");
+                    message.append(JasyptBundle.message("credential.save", savedPassword)).append("\n");
+                    message.append(JasyptBundle.message("credential.config", configFilePassword)).append("\n\n");
                 }
+
+                if (algorithmConflict) {
+                    message.append(JasyptBundle.message("credential.algorithm")).append(":\n");
+                    message.append(JasyptBundle.message("credential.save", savedAlgorithm)).append("\n");
+                    message.append(JasyptBundle.message("credential.config", configFileAlgorithm)).append("\n\n");
+                }
+
+                message.append(JasyptBundle.message("credential.choose"));
+
+                // 显示选择对话框
+                int choice = Messages.showDialog(
+                        message.toString(),
+                        JasyptBundle.message("credential.dialog.title"),
+                        new String[]{JasyptBundle.message("credential.dialog.options[0]"),
+                                JasyptBundle.message("credential.dialog.options[1]",
+                                        JasyptBundle.message("credential.dialog.options[2]"))},
+                        0, Messages.getQuestionIcon()
+                );
+
+                if (choice == 0) {
+                    // 使用已保存的凭据
+                    secretKeyField.setText(savedPassword);
+                    selectAlgorithmInComboBox(savedAlgorithm);
+                    rememberPasswordCheckBox.setSelected(true);
+                } else if (choice == 1) {
+                    // 使用配置文件凭据
+                    secretKeyField.setText(configFilePassword);
+                    selectAlgorithmInComboBox(configFileAlgorithm);
+                    // 如果用户选择了配置文件的凭据，询问是否更新已保存的凭据
+                    if (Messages.showYesNoDialog(
+                            JasyptBundle.message("credential.dialog.update.message"),
+                            JasyptBundle.message("credential.dialog.update.title"),
+                            Messages.getQuestionIcon()) == Messages.YES) {
+                        saveSettings(configFilePassword, configFileAlgorithm, true);
+                    }
+                } else {
+                    // 用户取消了，默认使用已保存的凭据
+                    secretKeyField.setText(savedPassword);
+                    selectAlgorithmInComboBox(savedAlgorithm);
+                    rememberPasswordCheckBox.setSelected(true);
+                }
+            } else {
+                // 无冲突，使用已保存的凭据
+                secretKeyField.setText(savedPassword);
+                selectAlgorithmInComboBox(savedAlgorithm);
+                rememberPasswordCheckBox.setSelected(true);
+            }
+        } else {
+            // 如果用户没有选择记住凭据，优先使用配置文件中的凭据
+            if (configFilePassword != null && !configFilePassword.isEmpty()) {
+                secretKeyField.setText(configFilePassword);
+            }
+
+            if (configFileAlgorithm != null && !configFileAlgorithm.isEmpty()) {
+                selectAlgorithmInComboBox(configFileAlgorithm);
+            } else {
+                // 默认选择DEFAULT_ALGORITHM
+                selectAlgorithmInComboBox(DEFAULT_ALGORITHM);
+            }
+        }
+    }
+
+
+    /**
+     * 在算法下拉框中选择指定的算法
+     */
+    private void selectAlgorithmInComboBox(String algorithm) {
+        if (algorithm == null || algorithm.isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < algorithmComboBox.getItemCount(); i++) {
+            if (algorithmComboBox.getItemAt(i).equals(algorithm)) {
+                algorithmComboBox.setSelectedIndex(i);
+                return;
+            }
+        }
+
+        // 如果没有找到匹配的算法，使用默认算法
+        for (int i = 0; i < algorithmComboBox.getItemCount(); i++) {
+            if (algorithmComboBox.getItemAt(i).equals(DEFAULT_ALGORITHM)) {
+                algorithmComboBox.setSelectedIndex(i);
+                return;
             }
         }
     }
@@ -221,14 +293,13 @@ public class JasyptDialogForm {
                 processedText = encryptor.decrypt(textToProcess);
                 previewTextArea.setText(processedText);
             }
-
-            // 保存用户设置
-            saveSettings(secretKey, algorithm, rememberPasswordCheckBox.isSelected());
-
         } catch (Exception e) {
             previewTextArea.setText(JasyptBundle.message("error.process", e.getMessage()));
             processedText = null;
         }
+
+        // 不管加解密结果如何均保存用户设置
+        saveSettings(secretKey, algorithm, rememberPasswordCheckBox.isSelected());
     }
 
     public String getProcessedText() {
@@ -259,9 +330,7 @@ public class JasyptDialogForm {
             final String finalText = isEncryption && encSurroundCheckBox.isSelected() ?
                     "ENC(" + processedText + ")" : processedText;
 
-            WriteCommandAction.runWriteCommandAction(project, () -> {
-                targetDocument.replaceString(startOffset, endOffset, finalText);
-            });
+            WriteCommandAction.runWriteCommandAction(project, () -> targetDocument.replaceString(startOffset, endOffset, finalText));
         }
     }
 }

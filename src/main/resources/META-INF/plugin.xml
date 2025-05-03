@@ -16,11 +16,9 @@
     <description>An integrated tool for Jasypt encryption and decryption, helping developers manage sensitive configuration data with ease.</description>
 
     <change-notes><![CDATA[
-      <h4>1.0.8</h4>
+      <h4>1.0.9</h4>
       <ul>
-        <li> Added internationalization (i18n) support</li>
-        <li> Added support for file intention detection</li>
-        <li> Fixed known issues</li>
+        <li> Added support for reading password and algorithm from YAML and properties files for intention action</li>
       </ul>
       ]]>
     </change-notes>
