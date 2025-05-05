@@ -53,28 +53,27 @@ public class FileUtil {
             throw new RuntimeException("Cannot find virtual file for path: " + filePath);
         }
 
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-            ApplicationManager.getApplication().runWriteAction(() -> {
-                try {
-                    // 获取或创建 Document
-                    Document document = FileDocumentManager.getInstance().getDocument(vFile);
-                    if (document != null) {
-                        document.setText(content);
-                        FileDocumentManager.getInstance().saveDocument(document);
-                    } else {
-                        Files.writeString(filePath, content);
+        ApplicationManager.getApplication().invokeAndWait(() ->
+                ApplicationManager.getApplication().runWriteAction(() -> {
+                    try {
+                        // 获取或创建 Document
+                        Document document = FileDocumentManager.getInstance().getDocument(vFile);
+                        if (document != null) {
+                            document.setText(content);
+                            FileDocumentManager.getInstance().saveDocument(document);
+                        } else {
+                            Files.writeString(filePath, content);
+                        }
+                        vFile.refresh(true, false);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        latch.countDown();
                     }
-                    vFile.refresh(true, false);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    latch.countDown();
-                }
-            });
-        });
+                }));
 
         try {
-            latch.await(5, TimeUnit.SECONDS);
+            boolean ignored = latch.await(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IOException("write operation interrupted", e);
@@ -82,7 +81,7 @@ public class FileUtil {
     }
 
 
-    public static Map<String, Object> loadYamlFile(Path path) throws IOException {
+    public static Map<String, Object> loadYamlFile(Path path) {
         // 使用 FileUtil 获取最新内容
         String content = FileUtil.readFile(path);
         LoaderOptions loaderOptions = new LoaderOptions();
