@@ -94,7 +94,7 @@ public class JasyptDialogForm {
 
             // 检查是否有冲突（密码或算法至少有一个不同）
             boolean passwordConflict = configFilePassword != null && !configFilePassword.isEmpty() && !configFilePassword.equals(savedPassword);
-            boolean algorithmConflict = configFileAlgorithm != null && !configFileAlgorithm.isEmpty() && !configFileAlgorithm.equals(savedAlgorithm);
+            boolean algorithmConflict = configFileAlgorithm != null && !configFileAlgorithm.isEmpty() && !configFileAlgorithm.equalsIgnoreCase(savedAlgorithm);
 
             if (passwordConflict || algorithmConflict) {
                 // 构建冲突提示消息
@@ -177,7 +177,7 @@ public class JasyptDialogForm {
         }
 
         for (int i = 0; i < algorithmComboBox.getItemCount(); i++) {
-            if (algorithmComboBox.getItemAt(i).equals(algorithm)) {
+            if (algorithmComboBox.getItemAt(i).equalsIgnoreCase(algorithm)) {
                 algorithmComboBox.setSelectedIndex(i);
                 return;
             }

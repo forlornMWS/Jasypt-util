@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-05-15
+
+### Fixed
+- fix: improve algorithm conflict check to be case-insensitive
+
 ## [1.0.9] - 2025-05-03
 
 ### Added

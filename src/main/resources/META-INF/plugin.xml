@@ -16,9 +16,9 @@
     <description>An integrated tool for Jasypt encryption and decryption, helping developers manage sensitive configuration data with ease.</description>
 
     <change-notes><![CDATA[
-      <h4>1.0.9</h4>
+      <h4>1.1.0</h4>
       <ul>
-        <li> Added support for reading password and algorithm from YAML and properties files for intention action</li>
+        <li> Fixed: improve algorithm conflict check to be case-insensitive</li>
       </ul>
       ]]>
     </change-notes>
